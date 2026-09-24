@@ -55,8 +55,9 @@ export default function PayButton({
     const handler = window.PaystackPop.setup({
       key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
       email,
-      amount: AMOUNT_KES * 100, // Paystack expects the amount in the lowest currency subunit
+      amount: AMOUNT_KES * 100,
       currency: "KES",
+      channels: ["mobile_money", "card"],
       ref: reference,
       metadata: { cvId },
       callback: (response: any) => {
@@ -95,7 +96,7 @@ export default function PayButton({
         disabled={paying}
         className="bg-brand hover:bg-brand-dark transition-colors text-white font-semibold px-6 py-3 rounded-lg disabled:opacity-60"
       >
-        {paying ? "Confirming payment..." : `Pay 20 Bob & Download`}
+        {paying ? "Confirming payment..." : `Pay 20 Bob via M-Pesa`}
       </button>
       {error && <p className="text-red-600 text-sm mt-2">{error}</p>}
     </div>

@@ -5,3 +5,31 @@
 body {
   background-color: #fafafa;
 }
+
+/* Print styles: when the browser print dialog opens (via window.print()),
+   hide everything on the page except the CV itself. */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  #cv-printable,
+  #cv-printable * {
+    visibility: visible;
+  }
+
+  #cv-printable {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  @page {
+    margin: 1.5cm;
+  }
+}

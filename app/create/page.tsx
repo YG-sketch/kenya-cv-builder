@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import CVForm from "@/components/CVForm";
 import CVPreview from "@/components/CVPreview";
+import PayButton from "@/components/PayButton";
 import { CVData, CVTab } from "@/lib/types";
 import { emptyCv } from "@/lib/emptyCv";
 
@@ -11,13 +12,13 @@ const STORAGE_KEY = "cv_kenya_draft_id";
 export default function CreatePage() {
   const [cvId, setCvId] = useState<string | null>(null);
   const [data, setData] = useState<CVData>(emptyCv());
+  const [isPaid, setIsPaid] = useState(false);
   const [activeTab, setActiveTab] = useState<CVTab>("Contact");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // On first load: reuse an existing draft from localStorage, or create a new one
   useEffect(() => {
     async function init() {
       try {
@@ -29,10 +30,10 @@ export default function CreatePage() {
             const cv = await res.json();
             setCvId(cv.id);
             setData({ ...emptyCv(), ...cv.data });
+            setIsPaid(!!cv.is_paid);
             setLoading(false);
             return;
           }
-          // existing id was invalid/stale — fall through and create a fresh one
           localStorage.removeItem(STORAGE_KEY);
         }
 
@@ -64,7 +65,6 @@ export default function CreatePage() {
     init();
   }, []);
 
-  // Debounced autosave whenever data changes
   useEffect(() => {
     if (!cvId || loading) return;
     if (saveTimer.current) clearTimeout(saveTimer.current);
@@ -117,6 +117,34 @@ export default function CreatePage() {
         <div>
           <p className="text-xs text-gray-400 mb-2">Live preview</p>
           <CVPreview data={data} />
+
+          <div className="mt-6 border-t pt-6">
+            {isPaid ? (
+              <div>
+                <p className="text-green-700 font-medium mb-3">
+                  ✅ Payment confirmed — your CV is unlocked.
+                </p>
+                <button
+                  onClick={() => window.print()}
+                  className="bg-brand hover:bg-brand-dark transition-colors text-white font-semibold px-6 py-3 rounded-lg"
+                >
+                  Download / Print CV
+                </button>
+                <p className="text-xs text-gray-400 mt-2">
+                  Choose "Save as PDF" in the print dialog to download it.
+                </p>
+              </div>
+            ) : (
+              cvId && (
+                <PayButton
+                  cvId={cvId}
+                  email={data.email}
+                  phone={data.phone}
+                  onPaid={() => setIsPaid(true)}
+                />
+              )
+            )}
+          </div>
         </div>
       </div>
     </main>

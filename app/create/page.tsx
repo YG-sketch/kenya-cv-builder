@@ -14,33 +14,52 @@ export default function CreatePage() {
   const [activeTab, setActiveTab] = useState<CVTab>("Contact");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // On first load: reuse an existing draft from localStorage, or create a new one
   useEffect(() => {
     async function init() {
-      const existingId = localStorage.getItem(STORAGE_KEY);
+      try {
+        const existingId = localStorage.getItem(STORAGE_KEY);
 
-      if (existingId) {
-        const res = await fetch(`/api/cv/${existingId}`);
-        if (res.ok) {
-          const cv = await res.json();
-          setCvId(cv.id);
-          setData({ ...emptyCv(), ...cv.data });
-          setLoading(false);
-          return;
+        if (existingId) {
+          const res = await fetch(`/api/cv/${existingId}`);
+          if (res.ok) {
+            const cv = await res.json();
+            setCvId(cv.id);
+            setData({ ...emptyCv(), ...cv.data });
+            setLoading(false);
+            return;
+          }
+          // existing id was invalid/stale — fall through and create a fresh one
+          localStorage.removeItem(STORAGE_KEY);
         }
-      }
 
-      const res = await fetch("/api/cv", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ data: emptyCv() }),
-      });
-      const cv = await res.json();
-      localStorage.setItem(STORAGE_KEY, cv.id);
-      setCvId(cv.id);
-      setLoading(false);
+        const res = await fetch("/api/cv", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ data: emptyCv() }),
+        });
+
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(`Failed to create CV (status ${res.status}): ${text}`);
+        }
+
+        const cv = await res.json();
+        if (!cv.id) {
+          throw new Error(`Server did not return a CV id: ${JSON.stringify(cv)}`);
+        }
+
+        localStorage.setItem(STORAGE_KEY, cv.id);
+        setCvId(cv.id);
+        setLoading(false);
+      } catch (err: any) {
+        console.error("CV init failed:", err);
+        setError(err.message ?? "Something went wrong loading your CV.");
+        setLoading(false);
+      }
     }
     init();
   }, []);
@@ -52,12 +71,17 @@ export default function CreatePage() {
 
     saveTimer.current = setTimeout(async () => {
       setSaving(true);
-      await fetch(`/api/cv/${cvId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ data }),
-      });
-      setSaving(false);
+      try {
+        await fetch(`/api/cv/${cvId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ data }),
+        });
+      } catch (err) {
+        console.error("Autosave failed:", err);
+      } finally {
+        setSaving(false);
+      }
     }, 800);
 
     return () => {
@@ -66,7 +90,20 @@ export default function CreatePage() {
   }, [data, cvId, loading]);
 
   if (loading) {
-    return <div className="max-w-6xl mx-auto px-6 py-20 text-center text-gray-500">Loading your CV...</div>;
+    return (
+      <div className="max-w-6xl mx-auto px-6 py-20 text-center text-gray-500">
+        Loading your CV...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-2xl mx-auto px-6 py-20 text-center">
+        <p className="text-red-600 font-medium mb-2">Something went wrong</p>
+        <p className="text-gray-500 text-sm">{error}</p>
+      </div>
+    );
   }
 
   return (

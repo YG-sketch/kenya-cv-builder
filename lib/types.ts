@@ -43,3 +43,12 @@ export interface CVData {
   certifications: Certification[];
   languages: LanguageItem[];
 }
+
+export type CVTab =
+  | "Contact"
+  | "Summary"
+  | "Experience"
+  | "Education"
+  | "Skills"
+  | "Certifications"
+  | "Languages";

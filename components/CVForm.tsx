@@ -1,9 +1,9 @@
 "use client";
 
 import { v4 as uuid } from "uuid";
-import { CVData, Experience, Education, Certification, LanguageItem } from "@/lib/types";
+import { CVData, Experience, Education, Certification, LanguageItem, CVTab } from "@/lib/types";
 
-const TABS = [
+const TABS: CVTab[] = [
   "Contact",
   "Summary",
   "Experience",
@@ -11,9 +11,7 @@ const TABS = [
   "Skills",
   "Certifications",
   "Languages",
-] as const;
-
-type Tab = (typeof TABS)[number];
+];
 
 export default function CVForm({
   data,
@@ -23,8 +21,8 @@ export default function CVForm({
 }: {
   data: CVData;
   onChange: (data: CVData) => void;
-  activeTab: Tab;
-  setActiveTab: (tab: Tab) => void;
+  activeTab: CVTab;
+  setActiveTab: (tab: CVTab) => void;
 }) {
   const update = (patch: Partial<CVData>) => onChange({ ...data, ...patch });
 

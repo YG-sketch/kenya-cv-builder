@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import CVForm from "@/components/CVForm";
 import CVPreview from "@/components/CVPreview";
-import { CVData } from "@/lib/types";
+import { CVData, CVTab } from "@/lib/types";
 import { emptyCv } from "@/lib/emptyCv";
 
 const STORAGE_KEY = "cv_kenya_draft_id";
@@ -11,9 +11,7 @@ const STORAGE_KEY = "cv_kenya_draft_id";
 export default function CreatePage() {
   const [cvId, setCvId] = useState<string | null>(null);
   const [data, setData] = useState<CVData>(emptyCv());
-  const [activeTab, setActiveTab] = useState
-    "Contact" | "Summary" | "Experience" | "Education" | "Skills" | "Certifications" | "Languages"
-  >("Contact");
+  const [activeTab, setActiveTab] = useState<CVTab>("Contact");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
